@@ -60,7 +60,7 @@ export default function Login() {
           targetPath = "/admin/dashboard"
           break
         case "doctor":
-        case "2":
+        case "4":
           targetPath = "/doctor/dashboard"
           break
         case "patient":
@@ -68,7 +68,7 @@ export default function Login() {
           targetPath = "/patient/dashboard"
           break
         case "receptionist":
-        case "4":
+        case "2":
         case "staff":
           targetPath = "/receptionist/dashboard"
           break
@@ -122,11 +122,11 @@ export default function Login() {
           case "admin":
           case "1": targetPath = "/admin/dashboard"; break;
           case "doctor":
-          case "2": targetPath = "/doctor/dashboard"; break;
+          case "4": targetPath = "/doctor/dashboard"; break;
           case "patient":
           case "3": targetPath = "/patient/dashboard"; break;
           case "receptionist":
-          case "4":
+          case "2":
           case "staff":
           default:
             targetPath = from && from !== "/" && from !== "/login" ? from : "/receptionist/dashboard"

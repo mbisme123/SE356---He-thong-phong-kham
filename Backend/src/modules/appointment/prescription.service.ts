@@ -155,6 +155,7 @@ export const createPrescriptionService = async (
       );
 
       let totalAmount = 0;
+      const prescriptionDetails: PrescriptionDetail[] = [];
 
       
       for (const item of input.medicines) {
@@ -188,7 +189,7 @@ export const createPrescriptionService = async (
         totalAmount += itemTotal;
 
         
-        await PrescriptionDetail.create(
+        const detail = await PrescriptionDetail.create(
           {
             prescriptionId: prescription.id,
             medicineId: medicine.id,
@@ -203,6 +204,7 @@ export const createPrescriptionService = async (
           },
           { transaction: t }
         );
+        prescriptionDetails.push(detail);
 
         
         const exportCode = await generateExportCode(t);
@@ -222,6 +224,47 @@ export const createPrescriptionService = async (
       
       prescription.totalAmount = totalAmount;
       await prescription.save({ transaction: t });
+
+      // A visit can already have an examination invoice before medicines are prescribed.
+      // Keep that invoice in sync as part of the same prescription transaction.
+      const invoice = await Invoice.findOne({
+        where: { visitId: prescription.visitId },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+
+      if (invoice) {
+        await InvoiceItem.destroy({
+          where: { invoiceId: invoice.id, itemType: ItemType.MEDICINE },
+          transaction: t,
+        });
+
+        let medicineTotalAmount = 0;
+        for (const detail of prescriptionDetails) {
+          const subtotal = Number(detail.quantity) * Number(detail.unitPrice);
+          medicineTotalAmount += subtotal;
+
+          await InvoiceItem.create(
+            {
+              invoiceId: invoice.id,
+              itemType: ItemType.MEDICINE,
+              prescriptionDetailId: detail.id,
+              medicineName: detail.medicineName,
+              quantity: detail.quantity,
+              unitPrice: detail.unitPrice,
+              subtotal,
+            },
+            { transaction: t }
+          );
+        }
+
+        invoice.medicineTotalAmount = medicineTotalAmount;
+        invoice.totalAmount =
+          Number(invoice.examinationFee) +
+          medicineTotalAmount -
+          Number(invoice.discount || 0);
+        await invoice.save({ transaction: t });
+      }
 
 
       if (visit.status !== "COMPLETED") {

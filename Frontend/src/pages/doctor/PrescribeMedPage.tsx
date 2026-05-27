@@ -539,10 +539,14 @@ export default function PrescribeMed() {
         
         const invoice = response.data.data?.invoice;
         if (invoice) {
+          const examinationFee = Number(invoice.examinationFee || 0).toLocaleString("vi-VN");
+          const medicineTotalAmount = Number(invoice.medicineTotalAmount || 0).toLocaleString("vi-VN");
+          const totalAmount = Number(invoice.totalAmount || 0).toLocaleString("vi-VN");
+
           toast.success(
             `Đơn thuốc đã lưu! Hóa đơn ${
               invoice.invoiceCode
-            } đã được tạo (${invoice.totalAmount.toLocaleString()} VNĐ). Bệnh nhân có thể thanh toán tại quầy.`,
+            } đã được tạo (khám: ${examinationFee} VNĐ, thuốc: ${medicineTotalAmount} VNĐ, tổng: ${totalAmount} VNĐ). Bệnh nhân có thể thanh toán tại quầy.`,
             { duration: 5000 }
           );
           console.log("Invoice created:", invoice);

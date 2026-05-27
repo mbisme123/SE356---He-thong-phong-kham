@@ -110,8 +110,15 @@ async function seed() {
         fullName,
         roleId,
         isActive: true,
+        isEmailVerified: true,
       } as any,
     });
+
+    // Demo accounts must be usable immediately, including on a repeated seed run.
+    if (!user.isEmailVerified) {
+      await user.update({ isEmailVerified: true } as any);
+    }
+
     return user;
   };
 
